@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import time
 import MySQLdb
+import datetime
 import MySQLdb.cursors
-from . import table
+from . import table, debug
 
 
 class Database(object):
@@ -29,11 +31,12 @@ class Database(object):
         self.structure = self._build_structure()
 
     def __call__(self, query, *args):
+        start = self._time_stamp()
         cursor = self.connection.cursor()
-        cursor.execute(query, args)
+        cursor.execute(str(query), args)
         self.query_count += 1
         if self.show_queries:
-            print '[SQL] {} args={}'.format(query, args)
+            print ('[SQL:QUERY][{:.5f}] ' + debug.info('{}; args={}')).format(self._time_stamp() - start, query, args)
         return cursor
 
     def __unicode__(self):
@@ -63,3 +66,8 @@ class Database(object):
             structure[t] = table.Table(self, t)
 
         return structure
+
+    @staticmethod
+    def _time_stamp():
+        now = datetime.datetime.now()
+        return time.mktime(now.timetuple()) + now.microsecond / 1000000.0

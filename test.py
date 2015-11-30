@@ -5,14 +5,5 @@ from sqlstorage.operator import *
 
 db = database.Database(password='123', name='game', show_query=True)
 
+db['user']['@create'] = {'nick': 'test123', 'password': '123'}
 
-class ManagerCustom(manager.BaseManager):
-    def all(self):
-        return ''
-
-    def max(self):
-        return Q(Like(nick='max'))
-
-
-db['user']['@'] = ManagerCustom
-print db['user']['@all'].fetchall()

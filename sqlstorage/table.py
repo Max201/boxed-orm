@@ -19,10 +19,7 @@ class Table(object):
         # Manager instance
         self.manager = manager.BaseManager(self)
 
-    def drop(self):
-        return self.db('DROP TABLE `{}`'.format(self.name))
-
-    def empty(self):
+    def clear(self):
         return self.db('TRUNCATE `{}`'.format(self.name))
 
     def __unicode__(self):
@@ -41,13 +38,10 @@ class Table(object):
         if type(item).__name__ not in ['str', 'unicode']:
             raise IndexError('Unknown index type in table {}'.format(self.name))
 
-        if item.startswith('#'):
-            return self._get_column(item[1:])
-
         if item.startswith('@'):
             return self.manager[item[1:]]
 
-        raise IndexError('Invalid index key {} for table {}'.format(item, self.name))
+        return self._get_column(item[1:])
 
     def __setitem__(self, key, value):
         if type(key).__name__ not in ['str', 'unicode']:
@@ -55,6 +49,9 @@ class Table(object):
 
         if key in '@':
             return self._set_manager(value)
+
+        if key.startswith('@'):
+            self.manager[key[1:]] = value
 
     def _set_manager(self, mngr):
         mngr = mngr(self)
@@ -74,8 +71,6 @@ class Table(object):
         struct = dict()
         for col in columns:
             struct[col['Field']] = col
-            if col['Key'].lower() in 'pri':
-                struct['pk'] = col
 
         return struct
 
@@ -93,7 +88,7 @@ class Table(object):
             )
 
             if structure[col].is_pk:
-                structure['pk'] = self.pk = structure[col]
+                self.pk = structure[col]
         return structure
 
     def _remove_col(self, col_name):

@@ -14,10 +14,6 @@ class Column(object):
         self.default = default
         self.extra = extra.lower()
 
-    def drop(self):
-        self.table.db('ALTER TABLE `{}` DROP COLUMN `{}`'.format(self.table.name, self.name))
-        return self.table._remove_col(self.name)
-
     def __unicode__(self):
         return '{}#{}'.format(str(self.table), self.name)
 
