@@ -5,5 +5,6 @@ from sqlstorage.operator import *
 
 db = database.Database(password='123', name='game', show_query=True)
 
-db['user']['@create'] = {'nick': 'test123', 'password': '123'}
+db['user']['@update'] = {'nick': 'Max23'}, Where(Like(nick='a')), Range(limit=1)
 
+print db['user']['@all'].fetchall()

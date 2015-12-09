@@ -119,6 +119,11 @@ class Query(BaseOperator):
         return self
 
 
+class Values(BaseOperator):
+    def __init__(self, **kwargs):
+        self.values = kwargs
+
+
 class Select(BaseOperator):
     def __init__(self, db_table, *args):
         if is_table(db_table):
@@ -161,10 +166,7 @@ class Delete(BaseOperator):
 class Update(BaseOperator):
     def __init__(self, db_table, **kwargs):
         # Values & Keys
-        self.update_values = kwargs.values()
-
-        # Get update keys
-        self.update_fields = kwargs.keys()
+        self.update = kwargs
 
         # Get table name
         if is_table(db_table):
@@ -175,19 +177,12 @@ class Update(BaseOperator):
             self.pk = None
 
     def __unicode__(self):
-        return '{} {}'.format(self.update, self.values)
+        return '{}'.format(self.update_query)
 
     @property
-    def update(self):
-        return 'UPDATE `{}` ({})'.format(
-            self.table, ', '.join(['`{}`'.format(a) for a in self.update_fields])
-        )
-
-    @property
-    def values(self):
-        # Update values
-        return 'VALUES ({})'.format(
-            ', '.join([literal(a) for a in self.update_values])
+    def update_query(self):
+        return 'UPDATE `{}` SET {}'.format(
+            self.table, ', '.join(['`{}` = {}'.format(a, literal(self.update[a])) for a in self.update.keys()])
         )
 
 
@@ -342,6 +337,8 @@ class Order(BaseOperator):
 
         order_by = []
         for f in self.fields:
+            if f is None or len(f) < 1:
+                continue
             if f == '?':
                 order_by.append('RAND()')
                 continue
@@ -351,20 +348,18 @@ class Order(BaseOperator):
                 order_by.append('`{}` ASC'.format(f[1:]))
             else:
                 order_by.append('`{}` ASC'.format(f))
-
-        return 'ORDER BY {}'.format(', '.join(order_by))
+        order_by = filter(lambda o: len(o) > 0, order_by)
+        if len(order_by) > 0:
+            return 'ORDER BY {}'.format(', '.join(order_by))
+        return ''
 
 
 class Range(BaseOperator):
     def __init__(self, start=None, limit=None):
-        self.start = start
-        self.limit = limit
+        self.start = start or 0
+        self.limit = limit or 2**64
 
     def __unicode__(self):
-        sql_range = []
-        if self.limit is not None:
-            sql_range.append('LIMIT {}'.format(self.limit))
-        if self.start is not None:
-            sql_range.append('OFFSET {}'.format(self.start))
-
-        return ' '.join(sql_range)
+        if not self.start:
+            return 'LIMIT {}'.format(self.limit)
+        return 'LIMIT {},{}'.format(self.start, self.limit)

@@ -18,7 +18,7 @@ class BaseManager(object):
     def __setitem__(self, key, value):
         if hasattr(self, key) and not key.startswith('_'):
             expr = getattr(self, key)
-            self.table.db(expr(**value))
+            self.table.db(expr(value))
             self.table.db.connection.commit()
 
     def _filter(self, expression, key):
@@ -27,7 +27,7 @@ class BaseManager(object):
 
         raise ValueError('Can\'t get query from {}@{} manager method'.format(self.table, key))
 
-    def create(self, **fields):
+    def create(self, fields):
         if not fields:
             return None
 
@@ -44,6 +44,13 @@ class BaseManager(object):
                 raise ValueError('Unknown column {} in table {}'.format(key, self.table.name))
 
         return Query(Insert(self.table, **values))
+
+    def delete(self, query):
+        return Query(Delete(self.table), **{type(a).__name__.lower(): a for a in query})
+
+    def update(self, fields):
+        kwargs = {type(a).__name__.lower(): a for a in fields}
+        return Query(Update(self.table, **kwargs.pop('dict')), **kwargs)
 
     def all(self):
         return Query(Select(self.table), order=[self.table.pk.name])
