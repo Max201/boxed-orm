@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from sqlstorage import database, manager
-from sqlstorage.operator import *
+from rembox import database, manager
+from rembox.operator import *
 
 db = database.Database(password='123', name='game', show_query=True)
 
