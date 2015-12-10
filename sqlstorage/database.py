@@ -4,7 +4,6 @@ import time
 import MySQLdb
 import datetime
 import MySQLdb.cursors
-from . import table, debug
 
 
 class Database(object):
